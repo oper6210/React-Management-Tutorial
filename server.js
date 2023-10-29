@@ -1,3 +1,4 @@
+const fs = require("fs");
 const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
@@ -6,33 +7,35 @@ const port = process.env.PORT || 5001;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+const data = fs.readFileSync("./database.json");
+const conf = JSON.parse(data);
+const { Client } = require("pg");
+
+const connection = new Client({
+  host: conf.host,
+  user: conf.user,
+  password: conf.password,
+  database: conf.database,
+  port: conf.port,
+});
+
+connection.connect((err) => {
+  if (err) console.log(err);
+  else {
+    console.log("db ok");
+  }
+});
+
 app.get("/api/customers", (req, res) => {
-  res.send([
-    {
-      id: 1,
-      image: "https://placeimg.com/64/64/1",
-      name: "김동현",
-      birthday: "9999",
-      gender: "남자",
-      job: "대학생",
-    },
-    {
-      id: 2,
-      image: "https://placeimg.com/64/64/2",
-      name: "김동현 22",
-      birthday: "9999",
-      gender: "남자",
-      job: "대학생",
-    },
-    {
-      id: 3,
-      image: "https://placeimg.com/64/64/3",
-      name: "김동현 33",
-      birthday: "999",
-      gender: "남자",
-      job: "대학생",
-    },
-  ]);
+  connection.query("SELECT * FROM CUSTOMER ORDER BY ID", (err, result) => {
+    if (err != null) {
+      console.log("Error");
+      res.sendStatus(500);
+    } else {
+      console.log("ok");
+      res.send(result.rows);
+    }
+  });
 });
 
 app.listen(port, () => console.log("listening on port " + port));
