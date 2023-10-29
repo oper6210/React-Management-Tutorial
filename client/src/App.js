@@ -6,18 +6,18 @@ import TableHead from "@material-ui/core/TableHead";
 import TableBody from "@material-ui/core/TableBody";
 import TableRow from "@material-ui/core/TableRow";
 import TableCell from "@material-ui/core/TableCell";
-import { createStyles } from "@mui/material";
+import { withStyles } from "@material-ui/core";
 
-const styles = createStyles((theme) => ({
+const styles = (theme) => ({
   root: {
     width: "100%",
     marginTop: theme.spacing(3),
-    overflow: "auto",
+    overflowX: "auto",
   },
   table: {
     minWidth: 1000,
   },
-}));
+});
 
 const customers = [
   {
@@ -46,7 +46,8 @@ const customers = [
   },
 ];
 
-function App(classes) {
+function App(props) {
+  const { classes } = props; // 클래스를 props로 전달받아 사용
   return (
     <Paper className={classes.root}>
       <Table className={classes.table}>
@@ -80,4 +81,4 @@ function App(classes) {
   );
 }
 
-export default createStyles(styles)(App);
+export default withStyles(styles)(App);
