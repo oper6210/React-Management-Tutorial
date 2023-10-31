@@ -18,6 +18,8 @@ const connection = new Client({
   database: conf.database,
   port: conf.port,
 });
+const multer = require("multer");
+const upload = multer({ dest: "./upload" });
 
 connection.connect((err) => {
   if (err) console.log(err);
@@ -35,6 +37,26 @@ app.get("/api/customers", (req, res) => {
       console.log("ok");
       res.send(result.rows);
     }
+  });
+});
+
+app.use("/image", express.static("./upload"));
+
+app.post("/api/customers", upload.single("image"), (req, res) => {
+  let sql =
+    "INSERT INTO CUSTOMER (image, name, birthday, gender, job) VALUES ($1,$2,$3,$4,$5)";
+  let image = "http://localhost:3000/image/" + req.file.filename;
+  let name = req.body.userName;
+  let birthday = req.body.birthday;
+  let gender = req.body.gender;
+  let job = req.body.job;
+  console.log(image);
+  let params = [image, name, birthday, gender, job];
+  connection.query(sql, params, (err, rows, fields) => {
+    res.send(rows);
+    console.log(sql);
+    console.log(params);
+    console.log(err);
   });
 });
 
