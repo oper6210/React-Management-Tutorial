@@ -32,6 +32,7 @@ class CustomerAdd extends React.Component {
     })
       .then((response) => {
         console.log(response.data);
+        this.props.stateRefresh();
       })
       .catch((error) => {
         console.error("Error adding customer:", error);
