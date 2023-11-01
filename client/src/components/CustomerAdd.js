@@ -84,7 +84,8 @@ class CustomerAdd extends React.Component {
         <input
           type="file"
           name="file"
-          file={this.state.fileName}
+          file={this.state.file}
+          value={this.state.fileName}
           onChange={this.handleFileChange}
         />
         <br />
