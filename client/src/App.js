@@ -12,7 +12,6 @@ import { withStyles } from "@material-ui/core";
 import CircularProgress from "@mui/material/CircularProgress";
 
 import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
@@ -90,19 +89,25 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      customers: "",
+      customers: [],
       completed: 0,
+      searchKeyword: "",
     };
   }
 
   stateRefresh = () => {
-    this.setState({
-      customers: "",
-      completed: 0,
-    });
-    this.callApi()
-      .then((res) => this.setState({ customers: res }))
-      .catch((err) => console.log(err));
+    this.setState(
+      (prevState) => ({
+        customers: [],
+        completed: 0,
+        searchKeyword: "",
+      }),
+      () => {
+        this.callApi()
+          .then((res) => this.setState({ customers: res }))
+          .catch((err) => console.log(err));
+      }
+    );
   };
 
   componentDidMount() {
@@ -123,7 +128,32 @@ class App extends Component {
     this.setState({ completed: completed >= 100 ? 0 : completed + 10 });
   };
 
+  handleValueChange = (e) => {
+    let nextState = {};
+    nextState[e.target.name] = e.target.value;
+    this.setState(nextState);
+  };
+
   render() {
+    const filteredComponents = (data) => {
+      data = data.filter((c) => {
+        return c.name.indexOf(this.state.searchKeyword) > -1;
+      });
+      return data.map((c) => {
+        return (
+          <Customer
+            stateRefresh={this.stateRefresh}
+            key={c.id}
+            id={c.id}
+            image={c.image}
+            name={c.name}
+            birthday={c.birthday}
+            gender={c.gender}
+            job={c.job}
+          />
+        );
+      });
+    };
     const { classes } = this.props; // 클래스를 props로 전달받아 사용
     const cellList = [
       "번호",
@@ -162,6 +192,9 @@ class App extends Component {
               <StyledInputBase
                 placeholder="검색하기"
                 inputProps={{ "aria-label": "search" }}
+                name="searchKeyword"
+                value={this.state.searchKeyword}
+                onChange={this.handleValueChange}
               />
             </Search>
           </Toolbar>
@@ -182,20 +215,7 @@ class App extends Component {
             </TableHead>
             <TableBody>
               {this.state.customers ? (
-                this.state.customers.map((c) => {
-                  return (
-                    <Customer
-                      stateRefresh={this.stateRefresh}
-                      key={c.id}
-                      id={c.id}
-                      image={c.image}
-                      name={c.name}
-                      birthday={c.birthday}
-                      gender={c.gender}
-                      job={c.job}
-                    />
-                  );
-                })
+                filteredComponents(this.state.customers)
               ) : (
                 <TableRow>
                   <TableCell colSpan="6" align="center">
