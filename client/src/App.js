@@ -11,14 +11,75 @@ import TableCell from "@material-ui/core/TableCell";
 import { withStyles } from "@material-ui/core";
 import CircularProgress from "@mui/material/CircularProgress";
 
+import AppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import Toolbar from "@mui/material/Toolbar";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
+import InputBase from "@mui/material/InputBase";
+import MenuIcon from "@mui/icons-material/Menu";
+import SearchIcon from "@mui/icons-material/Search";
+import { styled, alpha } from "@mui/material/styles";
+
+const Search = styled("div")(({ theme }) => ({
+  position: "relative",
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: alpha(theme.palette.common.white, 0.15),
+  "&:hover": {
+    backgroundColor: alpha(theme.palette.common.white, 0.25),
+  },
+  marginLeft: 0,
+  width: "100%",
+  [theme.breakpoints.up("sm")]: {
+    marginLeft: theme.spacing(1),
+    width: "auto",
+  },
+}));
+
+const SearchIconWrapper = styled("div")(({ theme }) => ({
+  padding: theme.spacing(0, 2),
+  height: "100%",
+  position: "absolute",
+  pointerEvents: "none",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+}));
+
+const StyledInputBase = styled(InputBase)(({ theme }) => ({
+  color: "inherit",
+  "& .MuiInputBase-input": {
+    padding: theme.spacing(1, 1, 1, 0),
+    // vertical padding + font size from searchIcon
+    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
+    transition: theme.transitions.create("width"),
+    width: "100%",
+    [theme.breakpoints.up("sm")]: {
+      width: "12ch",
+      "&:focus": {
+        width: "20ch",
+      },
+    },
+  },
+}));
+
 const styles = (theme) => ({
   root: {
     width: "100%",
-    marginTop: theme.spacing(3),
-    overflowX: "auto",
+    overflowX: 1080,
   },
-  table: {
-    minWidth: 1000,
+  paper: {
+    marginLeft: 18,
+    marginRight: 18,
+  },
+  tableHead: {
+    fontSize: "1.1rem",
+  },
+  menu: {
+    marginTop: 15,
+    marginBottom: 15,
+    display: "flex",
+    justifyContent: "center",
   },
   progress: {
     margin: theme.spacing(2),
@@ -64,19 +125,59 @@ class App extends Component {
 
   render() {
     const { classes } = this.props; // 클래스를 props로 전달받아 사용
+    const cellList = [
+      "번호",
+      "프로필 이미지",
+      "이름",
+      "생년월일",
+      "성별",
+      "직업",
+      "설정",
+    ];
     return (
-      <div>
-        <Paper className={classes.root}>
+      <div className={classes.root}>
+        <AppBar position="static">
+          <Toolbar>
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="open drawer"
+              sx={{ mr: 2 }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
+            >
+              고객 관리 시스템
+            </Typography>
+            <Search>
+              <SearchIconWrapper>
+                <SearchIcon />
+              </SearchIconWrapper>
+              <StyledInputBase
+                placeholder="검색하기"
+                inputProps={{ "aria-label": "search" }}
+              />
+            </Search>
+          </Toolbar>
+        </AppBar>
+        <div className={classes.menu}>
+          <CustomerAdd stateRefresh={this.stateRefresh} />
+        </div>
+        <Paper className={classes.paper}>
           <Table className={classes.table}>
             <TableHead>
               <TableRow>
-                <TableCell>번호</TableCell>
-                <TableCell>이미지</TableCell>
-                <TableCell>이름</TableCell>
-                <TableCell>생년월일</TableCell>
-                <TableCell>성별</TableCell>
-                <TableCell>직업</TableCell>
-                <TableCell>설정</TableCell>
+                {cellList.map((c) => {
+                  return (
+                    <TableCell className={classes.tableHead}>{c}</TableCell>
+                  );
+                })}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -109,7 +210,6 @@ class App extends Component {
             </TableBody>
           </Table>
         </Paper>
-        <CustomerAdd stateRefresh={this.stateRefresh} />
       </div>
     );
   }
