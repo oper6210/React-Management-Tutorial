@@ -5,6 +5,7 @@
 
 # database
 /database.json
+sessionOption.js
 
 # dependencies
 /node_modules
