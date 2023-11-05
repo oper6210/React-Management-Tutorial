@@ -1,238 +1,205 @@
-import React, { Component } from "react";
 import "./App.css";
-import Customer from "./components/Customer";
-import CustomerAdd from "./components/CustomerAdd";
-import Paper from "@material-ui/core/Paper";
-import Table from "@material-ui/core/Table";
-import TableHead from "@material-ui/core/TableHead";
-import TableBody from "@material-ui/core/TableBody";
-import TableRow from "@material-ui/core/TableRow";
-import TableCell from "@material-ui/core/TableCell";
-import { withStyles } from "@material-ui/core";
-import CircularProgress from "@mui/material/CircularProgress";
+import { useState } from "react";
+import { useEffect } from "react";
+import Main from "./components/Main";
 
-import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
-import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
-import InputBase from "@mui/material/InputBase";
-import MenuIcon from "@mui/icons-material/Menu";
-import SearchIcon from "@mui/icons-material/Search";
-import { styled, alpha } from "@mui/material/styles";
+function Login(props) {
+  const [id, setId] = useState("");
+  const [password, setPassword] = useState("");
 
-const Search = styled("div")(({ theme }) => ({
-  position: "relative",
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: alpha(theme.palette.common.white, 0.15),
-  "&:hover": {
-    backgroundColor: alpha(theme.palette.common.white, 0.25),
-  },
-  marginLeft: 0,
-  width: "100%",
-  [theme.breakpoints.up("sm")]: {
-    marginLeft: theme.spacing(1),
-    width: "auto",
-  },
-}));
+  return (
+    <>
+      <h2>로그인</h2>
 
-const SearchIconWrapper = styled("div")(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: "100%",
-  position: "absolute",
-  pointerEvents: "none",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: "inherit",
-  "& .MuiInputBase-input": {
-    padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create("width"),
-    width: "100%",
-    [theme.breakpoints.up("sm")]: {
-      width: "12ch",
-      "&:focus": {
-        width: "20ch",
-      },
-    },
-  },
-}));
-
-const styles = (theme) => ({
-  root: {
-    width: "100%",
-    overflowX: 1080,
-  },
-  paper: {
-    marginLeft: 18,
-    marginRight: 18,
-  },
-  tableHead: {
-    fontSize: "1.1rem",
-  },
-  menu: {
-    marginTop: 15,
-    marginBottom: 15,
-    display: "flex",
-    justifyContent: "center",
-  },
-  progress: {
-    margin: theme.spacing(2),
-  },
-});
-
-class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      customers: [],
-      completed: 0,
-      searchKeyword: "",
-    };
-  }
-
-  stateRefresh = () => {
-    this.setState(
-      (prevState) => ({
-        customers: [],
-        completed: 0,
-        searchKeyword: "",
-      }),
-      () => {
-        this.callApi()
-          .then((res) => this.setState({ customers: res }))
-          .catch((err) => console.log(err));
-      }
-    );
-  };
-
-  componentDidMount() {
-    this.timer = setInterval(this.progress, 1);
-    this.callApi()
-      .then((res) => this.setState({ customers: res }))
-      .catch((err) => console.log(err));
-  }
-
-  callApi = async () => {
-    const response = await fetch("/api/customers");
-    const body = await response.json();
-    return body;
-  };
-
-  progress = () => {
-    const { completed } = this.state;
-    this.setState({ completed: completed >= 100 ? 0 : completed + 10 });
-  };
-
-  handleValueChange = (e) => {
-    let nextState = {};
-    nextState[e.target.name] = e.target.value;
-    this.setState(nextState);
-  };
-
-  render() {
-    const filteredComponents = (data) => {
-      data = data.filter((c) => {
-        return c.name.indexOf(this.state.searchKeyword) > -1;
-      });
-      return data.map((c) => {
-        return (
-          <Customer
-            stateRefresh={this.stateRefresh}
-            key={c.id}
-            id={c.id}
-            image={c.image}
-            name={c.name}
-            birthday={c.birthday}
-            gender={c.gender}
-            job={c.job}
+      <div className="form">
+        <p>
+          <input
+            className="login"
+            type="text"
+            name="username"
+            placeholder="아이디"
+            onChange={(event) => {
+              setId(event.target.value);
+            }}
           />
-        );
-      });
-    };
-    const { classes } = this.props; // 클래스를 props로 전달받아 사용
-    const cellList = [
-      "번호",
-      "프로필 이미지",
-      "이름",
-      "생년월일",
-      "성별",
-      "직업",
-      "설정",
-    ];
-    return (
-      <div className={classes.root}>
-        <AppBar position="static">
-          <Toolbar>
-            <IconButton
-              size="large"
-              edge="start"
-              color="inherit"
-              aria-label="open drawer"
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography
-              variant="h6"
-              noWrap
-              component="div"
-              sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
-            >
-              고객 관리 시스템
-            </Typography>
-            <Search>
-              <SearchIconWrapper>
-                <SearchIcon />
-              </SearchIconWrapper>
-              <StyledInputBase
-                placeholder="검색하기"
-                inputProps={{ "aria-label": "search" }}
-                name="searchKeyword"
-                value={this.state.searchKeyword}
-                onChange={this.handleValueChange}
-              />
-            </Search>
-          </Toolbar>
-        </AppBar>
-        <div className={classes.menu}>
-          <CustomerAdd stateRefresh={this.stateRefresh} />
-        </div>
-        <Paper className={classes.paper}>
-          <Table className={classes.table}>
-            <TableHead>
-              <TableRow>
-                {cellList.map((c) => {
-                  return (
-                    <TableCell className={classes.tableHead}>{c}</TableCell>
-                  );
-                })}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {this.state.customers ? (
-                filteredComponents(this.state.customers)
-              ) : (
-                <TableRow>
-                  <TableCell colSpan="6" align="center">
-                    <CircularProgress
-                      className={classes.progress}
-                      variant="determinate"
-                      value={this.state.completed}
-                    />
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </Paper>
+        </p>
+        <p>
+          <input
+            className="login"
+            type="password"
+            name="pwd"
+            placeholder="비밀번호"
+            onChange={(event) => {
+              setPassword(event.target.value);
+            }}
+          />
+        </p>
+
+        <p>
+          <input
+            className="btn"
+            type="submit"
+            value="로그인"
+            onClick={() => {
+              const userData = {
+                userId: id,
+                userPassword: password,
+              };
+              fetch("http://localhost:3000/login", {
+                //auth 주소에서 받을 예정
+                method: "post", // method :통신방법
+                headers: {
+                  // headers: API 응답에 대한 정보를 담음
+                  "content-type": "application/json",
+                },
+                body: JSON.stringify(userData), //userData라는 객체를 보냄
+              })
+                .then((res) => res.json())
+                .then((json) => {
+                  if (json.isLogin === "True") {
+                    props.setMode("WELCOME");
+                  } else {
+                    alert(json.isLogin);
+                  }
+                });
+            }}
+          />
+        </p>
       </div>
-    );
-  }
+
+      <p>
+        계정이 없으신가요?{" "}
+        <button
+          onClick={() => {
+            props.setMode("SIGNIN");
+          }}
+        >
+          회원가입
+        </button>
+      </p>
+    </>
+  );
 }
 
-export default withStyles(styles)(App);
+function Signin(props) {
+  const [id, setId] = useState("");
+  const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
+
+  return (
+    <>
+      <h2>회원가입</h2>
+
+      <div className="form">
+        <p>
+          <input
+            className="login"
+            type="text"
+            placeholder="아이디"
+            onChange={(event) => {
+              setId(event.target.value);
+            }}
+          />
+        </p>
+        <p>
+          <input
+            className="login"
+            type="password"
+            placeholder="비밀번호"
+            onChange={(event) => {
+              setPassword(event.target.value);
+            }}
+          />
+        </p>
+        <p>
+          <input
+            className="login"
+            type="password"
+            placeholder="비밀번호 확인"
+            onChange={(event) => {
+              setPassword2(event.target.value);
+            }}
+          />
+        </p>
+
+        <p>
+          <input
+            className="btn"
+            type="submit"
+            value="회원가입"
+            onClick={() => {
+              const userData = {
+                userId: id,
+                userPassword: password,
+                userPassword2: password2,
+              };
+              fetch("/signin", {
+                //signin 주소에서 받을 예정
+                method: "post", // method :통신방법
+                headers: {
+                  // headers: API 응답에 대한 정보를 담음
+                  "content-type": "application/json",
+                },
+                body: JSON.stringify(userData), //userData라는 객체를 보냄
+              })
+                .then((res) => res.json())
+                .then((json) => {
+                  if (json.isSuccess === "True") {
+                    alert("회원가입이 완료되었습니다!");
+                    props.setMode("LOGIN");
+                  } else {
+                    alert(json.isSuccess);
+                  }
+                });
+            }}
+          />
+        </p>
+      </div>
+
+      <p>
+        로그인화면으로 돌아가기{" "}
+        <button
+          onClick={() => {
+            props.setMode("LOGIN");
+          }}
+        >
+          로그인
+        </button>
+      </p>
+    </>
+  );
+}
+
+function App() {
+  const [mode, setMode] = useState("");
+
+  useEffect(() => {
+    fetch("http://localhost:3000/authcheck")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.isLogin === "True") {
+          setMode("WELCOME");
+        } else {
+          setMode("LOGIN");
+        }
+      });
+  }, []);
+
+  let content = null;
+
+  if (mode === "LOGIN") {
+    content = <Login setMode={setMode}></Login>;
+  } else if (mode === "SIGNIN") {
+    content = <Signin setMode={setMode}></Signin>;
+  } else if (mode === "WELCOME") {
+    content = <Main></Main>;
+  }
+
+  return mode !== "WELCOME" ? (
+    <div className="background">{content}</div>
+  ) : (
+    content
+  );
+}
+
+export default App;
