@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const app = express();
 const port = process.env.PORT || 5001;
 const bcrypt = require("bcrypt");
+const FileStore = require("session-file-store")(session);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -33,11 +34,14 @@ const sessionStore = new PgSession({
 
 app.use(
   session({
+    name: "session ID",
     key: "session_cookie_name",
     secret: sessionOption.password, // 세션 암호화를 위한 비밀 키
-    store: sessionStore,
+    store: new FileStore(),
     resave: false,
     saveUninitialized: false,
+    cookie:
+      ((maxAge = 24 * 60 * 60 * 1000), (httpOnly = false), (secure = false)),
   })
 );
 
@@ -49,10 +53,6 @@ connection.connect((err) => {
   else {
     console.log("db ok");
   }
-});
-
-app.get("/", (req, res) => {
-  req.sendFile(path.join(__dirname, ""));
 });
 
 app.get("/authcheck", (req, res) => {
@@ -67,7 +67,7 @@ app.get("/authcheck", (req, res) => {
 
 app.get("/logout", function (req, res) {
   req.session.destroy(function (err) {
-    res.redirect("/");
+    res.status(200).send("성공적으로 로그아웃되었습니다.");
   });
 });
 
@@ -91,8 +91,12 @@ app.post("/login", (req, res) => {
             // 입력된 비밀번호가 해시된 저장값과 같은 값인지 비교
             if (result === true) {
               // 비밀번호가 일치하면
-              sendData.isLogin = "True";
-              res.send(sendData);
+              req.session.is_logined = true; // 세션 정보 갱신
+              req.session.nickname = username;
+              req.session.save(function () {
+                sendData.isLogin = "True";
+                res.send(sendData);
+              });
             } else {
               // 비밀번호가 다른 경우
               sendData.isLogin = "로그인 정보가 일치하지 않습니다.";
@@ -137,8 +141,10 @@ app.post("/signin", (req, res) => {
           [username, hasedPassword],
           function (err, data) {
             if (err) throw error;
-            sendData.isSuccess = "True";
-            res.send(sendData);
+            req.session.save(function () {
+              sendData.isSuccess = "True";
+              res.send(sendData);
+            });
           }
         );
       } else if (password != password2) {

@@ -17,6 +17,7 @@ import Typography from "@mui/material/Typography";
 import InputBase from "@mui/material/InputBase";
 import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
+import Button from "@mui/material/Button";
 import { styled, alpha } from "@mui/material/styles";
 
 const Search = styled("div")(({ theme }) => ({
@@ -133,6 +134,23 @@ class Main extends Component {
     this.setState(nextState);
   };
 
+  handleLogout = () => {
+    // 클라이언트에서 서버로 로그아웃 요청을 보냅니다.
+    fetch("/logout", {
+      credentials: "include", // 쿠키 및 세션 정보를 요청에 포함시키기 위한 설정
+    })
+      .then((response) => {
+        if (response.ok) {
+          window.location.href = "http://localhost:3000"; // 리다이렉션
+        } else {
+          console.error("로그아웃 실패");
+        }
+      })
+      .catch((error) => {
+        console.error("로그아웃 요청 중 오류 발생", error);
+      });
+  };
+
   render() {
     const filteredComponents = (data) => {
       data = data.filter((c) => {
@@ -196,6 +214,9 @@ class Main extends Component {
                 onChange={this.handleValueChange}
               />
             </Search>
+            <Button color="inherit" onClick={this.handleLogout}>
+              Logout
+            </Button>
           </Toolbar>
         </AppBar>
         <div className={classes.menu}>
