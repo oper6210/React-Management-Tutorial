@@ -1,3 +1,4 @@
+// 필요한 모듈 가져오기
 const fs = require("fs");
 const express = require("express");
 const session = require("express-session");
@@ -7,12 +8,16 @@ const port = process.env.PORT || 5001;
 const bcrypt = require("bcrypt");
 const FileStore = require("session-file-store")(session);
 
+// JSON 및 URL-encoded 데이터를 파싱하기 위한 미들웨어 설정
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// JSON 파일에서 데이터베이스 구성 정보 읽고 파싱하기
 const data = fs.readFileSync("./database.json");
 const conf = JSON.parse(data);
 const { Client } = require("pg");
+
+// PostgreSQL 데이터베이스 연결 생성
 const connection = new Client({
   host: conf.host,
   user: conf.user,
@@ -20,23 +25,28 @@ const connection = new Client({
   database: conf.database,
   port: conf.port,
 });
+
+// 세션 관련 옵션 및 모듈 가져오기
 const sessionOption = require("./lib/sessionOption");
 const PgSession = require("connect-pg-simple")(session);
 
+// 세션 저장을 위한 PostgreSQL 클라이언트 생성
 const sessionPool = new Client({
-  connectionString: sessionOption.connectionString, // PostgreSQL 연결 문자열을 사용하거나 별도의 호스트, 포트, 사용자, 데이터베이스 정보를 제공할 수 있습니다.
+  connectionString: sessionOption.connectionString,
 });
 
+// 세션 정보를 저장하기 위한 테이블 이름 설정
 const sessionStore = new PgSession({
   pool: sessionPool,
-  tableName: "session", // 세션 정보를 저장할 테이블 이름
+  tableName: "session",
 });
 
+// 세션 설정 및 미들웨어 설정
 app.use(
   session({
     name: "session ID",
     key: "session_cookie_name",
-    secret: sessionOption.password, // 세션 암호화를 위한 비밀 키
+    secret: sessionOption.password,
     store: new FileStore(),
     resave: false,
     saveUninitialized: false,
@@ -45,16 +55,19 @@ app.use(
   })
 );
 
+// 파일 업로드를 위한 Multer 모듈 설정
 const multer = require("multer");
 const upload = multer({ dest: "./upload" });
 
+// 데이터베이스 연결
 connection.connect((err) => {
   if (err) console.log(err);
   else {
-    console.log("db ok");
+    console.log("데이터베이스 연결 성공");
   }
 });
 
+// 인증 확인을 위한 라우트 핸들러
 app.get("/authcheck", (req, res) => {
   const sendData = { isLogin: "" };
   if (req.session.is_logined) {
@@ -65,46 +78,49 @@ app.get("/authcheck", (req, res) => {
   res.send(sendData);
 });
 
+// 로그아웃 라우트 핸들러
 app.get("/logout", function (req, res) {
+  // 세션 파기
   req.session.destroy(function (err) {
     res.status(200).send("성공적으로 로그아웃되었습니다.");
   });
 });
 
+// 로그인 라우트 핸들러
 app.post("/login", (req, res) => {
-  // 데이터 받아서 결과 전송
+  // 데이터를 받아서 결과를 전송
   const username = req.body.userId;
   const password = req.body.userPassword;
   const sendData = { isLogin: "" };
 
   if (username && password) {
-    // id와 pw가 입력되었는지 확인
+    // 아이디와 비밀번호가 입력되었는지 확인
     connection.query(
       "SELECT * FROM userTable WHERE username = $1",
       [username],
       function (error, rows, fields) {
         if (error) throw error;
         if (rows.rows.length) {
-          // db에서의 반환값이 있다 = 일치하는 아이디가 있다.
+          // 데이터베이스에서 반환된 결과가 있다면, 일치하는 아이디가 있다는 것
 
           bcrypt.compare(password, rows.rows[0].password, (err, result) => {
-            // 입력된 비밀번호가 해시된 저장값과 같은 값인지 비교
+            // 입력된 비밀번호가 저장된 해시값과 일치하는지 확인
             if (result === true) {
-              // 비밀번호가 일치하면
-              req.session.is_logined = true; // 세션 정보 갱신
+              // 비밀번호가 일치하는 경우
+              req.session.is_logined = true; // 세션 정보 업데이트
               req.session.nickname = username;
               req.session.save(function () {
                 sendData.isLogin = "True";
                 res.send(sendData);
               });
             } else {
-              // 비밀번호가 다른 경우
+              // 비밀번호가 일치하지 않는 경우
               sendData.isLogin = "로그인 정보가 일치하지 않습니다.";
               res.send(sendData);
             }
           });
         } else {
-          // db에 해당 아이디가 없는 경우
+          // 데이터베이스에 해당 아이디가 없는 경우
           sendData.isLogin = "아이디 정보가 일치하지 않습니다.";
           res.send(sendData);
         }
@@ -117,8 +133,9 @@ app.post("/login", (req, res) => {
   }
 });
 
+// 회원가입 라우트 핸들러
 app.post("/signin", (req, res) => {
-  // 데이터 받아서 결과 전송
+  // 데이터를 받아서 결과를 전송
   const username = req.body.userId;
   const password = req.body.userPassword;
   const password2 = req.body.userPassword2;
@@ -134,11 +151,11 @@ app.post("/signin", (req, res) => {
           (rows.rows.length == 1 && rows.rows[0].username != username)) &&
         password == password2
       ) {
-        // DB에 같은 이름의 회원아이디가 없고, 비밀번호가 올바르게 입력된 경우
-        const hasedPassword = bcrypt.hashSync(password, 10); // 입력된 비밀번호를 해시한 값
+        // 데이터베이스에 동일한 사용자 이름이 없고, 비밀번호가 올바르게 입력된 경우
+        const hashedPassword = bcrypt.hashSync(password, 10); // 입력된 비밀번호를 해시화
         connection.query(
           "INSERT INTO userTable (username, password) VALUES($1,$2)",
-          [username, hasedPassword],
+          [username, hashedPassword],
           function (err, data) {
             if (err) throw error;
             req.session.save(function () {
@@ -152,34 +169,38 @@ app.post("/signin", (req, res) => {
         sendData.isSuccess = "입력된 비밀번호가 서로 다릅니다.";
         res.send(sendData);
       } else {
-        // DB에 같은 이름의 회원아이디가 있는 경우
-        sendData.isSuccess = "이미 존재하는 아이디 입니다!";
+        // 데이터베이스에 동일한 사용자 이름이 이미 있는 경우
+        sendData.isSuccess = "이미 존재하는 아이디입니다!";
         res.send(sendData);
       }
     });
   } else {
+    // 아이디, 비밀번호 중 입력되지 않은 값이 있는 경우
     sendData.isSuccess = "아이디와 비밀번호를 입력하세요!";
     res.send(sendData);
   }
 });
 
+// 고객 정보 불러오기 라우트 핸들러
 app.get("/api/customers", (req, res) => {
   connection.query(
     "SELECT * FROM CUSTOMER WHERE isDeleted = '0' ORDER BY ID",
     (err, result) => {
       if (err != null) {
-        console.log("Error");
+        console.log("에러");
         res.sendStatus(500);
       } else {
-        console.log("ok");
+        console.log("성공");
         res.send(result.rows);
       }
     }
   );
 });
 
+// 이미지 업로드를 위한 Multer 설정
 app.use("/image", express.static("./upload"));
 
+// 고객 정보 추가 라우트 핸들러
 app.post("/api/customers", upload.single("image"), (req, res) => {
   let sql =
     "INSERT INTO CUSTOMER (image, name, birthday, gender, job, createdDate, isdeleted) VALUES ($1,$2,$3,$4,$5,now(), 0)";
@@ -198,6 +219,7 @@ app.post("/api/customers", upload.single("image"), (req, res) => {
   });
 });
 
+// 고객 정보 삭제 라우트 핸들러
 app.delete("/api/customers/:id", (req, res) => {
   let sql = "UPDATE CUSTOMER SET isDeleted = 1 WHERE id  = $1";
   let params = [req.params.id];
@@ -206,4 +228,5 @@ app.delete("/api/customers/:id", (req, res) => {
   });
 });
 
-app.listen(port, () => console.log("listening on port " + port));
+// 서버가 지정된 포트에서 실행됨
+app.listen(port, () => console.log("포트 " + port + "에서 실행 중"));
