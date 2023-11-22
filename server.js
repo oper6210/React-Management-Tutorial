@@ -230,3 +230,90 @@ app.delete("/api/customers/:id", (req, res) => {
 
 // 서버가 지정된 포트에서 실행됨
 app.listen(port, () => console.log("포트 " + port + "에서 실행 중"));
+
+// 1. 배지 발행
+app.post("/badge", upload.single("image"), async (req, res) => {
+  try {
+    const image = req.file
+      ? "http://localhost:3000/image/" + req.file.filename
+      : null;
+
+    const { badgeName, content, detailContent, createDt } = req.body;
+    const result = await connection.query(
+      "INSERT INTO tblbadge (image, badgeName, content, detailContent, createDt) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [image, badgeName, content, detailContent, createDt]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// 2. 배지 조회
+app.get("/badge", async (req, res) => {
+  try {
+    const badgeId = req.params.badgeId;
+    const result = await connection.query("SELECT * FROM tblbadge");
+
+    if (result.rows.length === 0) {
+      res.status(404).send("Badge not found");
+    } else {
+      res.json(result.rows);
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// 3. 유저 조회
+app.get("/user", async (req, res) => {
+  try {
+    const result = await connection.query("SELECT * FROM tbluser");
+
+    if (result.rows.length === 0) {
+      res.status(404).send("User not found");
+    } else {
+      res.json(result.rows);
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// 4. 배지 수여
+app.post("/mybadge", async (req, res) => {
+  try {
+    const { badgeId, userId, createDt } = req.body;
+    await connection.query(
+      "INSERT INTO tbluserBadge (badgeId, userId, createDt) VALUES ($1, $2, $3)",
+      [badgeId, userId, createDt]
+    );
+    res.status(201).send("Badge awarded successfully");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// 5. 수여 배지 조회
+app.get("/mybadge/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const result = await connection.query(
+      "SELECT b.badgeId, b.image, b.badgeName, ub.createDt FROM tbluserBadge ub JOIN tblbadge b ON ub.badgeId = b.badgeId WHERE ub.userId = $1",
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).send("No badges awarded to the user");
+    } else {
+      res.json(result.rows);
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal Server Error");
+  }
+});
