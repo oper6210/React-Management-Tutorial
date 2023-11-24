@@ -4,7 +4,7 @@ const express = require("express");
 const session = require("express-session");
 const bodyParser = require("body-parser");
 const app = express();
-const port = process.env.PORT || 5001;
+const port = process.env.PORT || 80;
 const FileStore = require("session-file-store")(session);
 
 // JSON 및 URL-encoded 데이터를 파싱하기 위한 미들웨어 설정
