@@ -234,14 +234,21 @@ app.listen(port, () => console.log("포트 " + port + "에서 실행 중"));
 app.post("/badge", upload.single("image"), async (req, res) => {
   try {
     const image = req.file
-      ? "http://localhost:3000/image/" + req.file.filename
+      ? "http://35.216.96.15/image/" + req.file.filename
       : null;
 
-    const { badgeName, content, detailContent, createDt } = req.body;
+    const { badgeName, content, detailContent } = req.body;
+    
+    // 현재 시간을 생성
+    const currentDatetime = new Date();
+    // 생성된 현재 시간을 원하는 형식으로 변환 (예: 'YYYY-MM-DD HH:mm:ss')
+    const formattedDatetime = currentDatetime.toISOString().slice(0, 19).replace("T", " ");
+
     const result = await connection.query(
       "INSERT INTO tblbadge (image, badgeName, content, detailContent, createDt) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [image, badgeName, content, detailContent, createDt]
+      [image, badgeName, content, detailContent, formattedDatetime]
     );
+    
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error(error);
@@ -252,13 +259,26 @@ app.post("/badge", upload.single("image"), async (req, res) => {
 // 2. 배지 조회
 app.get("/badge", async (req, res) => {
   try {
-    const badgeId = req.params.badgeId;
-    const result = await connection.query("SELECT * FROM tblbadge");
+    const badgeId = req.query.badgeId; // query string에서 badgeId를 가져옴
 
-    if (result.rows.length === 0) {
-      res.status(404).send("Badge not found");
+    if (badgeId) {
+      // badgeId가 주어진 경우 해당 배지만 조회
+      const result = await connection.query("SELECT * FROM tblbadge WHERE badgeId = $1", [badgeId]);
+
+      if (result.rows.length === 0) {
+        res.status(404).send("Badge not found");
+      } else {
+        res.json(result.rows);
+      }
     } else {
-      res.json(result.rows);
+      // badgeId가 주어지지 않은 경우 전체 배지 목록 조회
+      const result = await connection.query("SELECT * FROM tblbadge");
+
+      if (result.rows.length === 0) {
+        res.status(404).send("No badges found");
+      } else {
+        res.json(result.rows);
+      }
     }
   } catch (error) {
     console.error(error);
@@ -285,11 +305,18 @@ app.get("/user", async (req, res) => {
 // 4. 배지 수여
 app.post("/mybadge", async (req, res) => {
   try {
-    const { badgeId, userId, createDt } = req.body;
+    const { badgeId, userId } = req.body;
+
+    // 현재 시간을 생성
+    const currentDatetime = new Date();
+    // 생성된 현재 시간을 원하는 형식으로 변환 (예: 'YYYY-MM-DD HH:mm:ss')
+    const formattedDatetime = currentDatetime.toISOString().slice(0, 19).replace("T", " ");
+
     await connection.query(
       "INSERT INTO tbluserBadge (badgeId, userId, createDt) VALUES ($1, $2, $3)",
-      [badgeId, userId, createDt]
+      [badgeId, userId, formattedDatetime]
     );
+
     res.status(201).send("Badge awarded successfully");
   } catch (error) {
     console.error(error);
