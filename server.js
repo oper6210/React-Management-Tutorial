@@ -261,9 +261,9 @@ app.post("/badge", upload.single("image"), async (req, res) => {
 });
 
 // 2. 배지 조회
-app.get("/badge", async (req, res) => {
+app.get("/badge/:badgeId?", async (req, res) => {
   try {
-    const badgeId = req.query.badgeId; // query string에서 badgeId를 가져옴
+    const badgeId = req.params.badgeId;
 
     if (badgeId) {
       // badgeId가 주어진 경우 해당 배지만 조회
@@ -329,9 +329,9 @@ app.post("/mybadge", async (req, res) => {
 });
 
 // 5. 수여 배지 조회
-app.get("/mybadge", async (req, res) => {
+app.get("/mybadge/:userId?", async (req, res) => {
   try {
-    const userId = req.query.userId;
+    const userId = req.params.userId;
 
     if (!userId) {
       // If userId is not provided, retrieve all badges
@@ -354,7 +354,7 @@ app.get("/mybadge", async (req, res) => {
       if (userBadgesResult.rows.length === 0) {
         res.status(404).send("No badges awarded to the user");
       } else {
-        res.json(userBadgesResult.rows[0]);
+        res.json(userBadgesResult.rows);
       }
     }
   } catch (error) {
