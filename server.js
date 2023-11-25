@@ -329,18 +329,33 @@ app.post("/mybadge", async (req, res) => {
 });
 
 // 5. 수여 배지 조회
-app.get("/mybadge/:userId", async (req, res) => {
+app.get("/mybadge", async (req, res) => {
   try {
-    const userId = req.params.userId;
-    const result = await connection.query(
-      "SELECT b.badgeId, b.image, b.badgeName, ub.createDt FROM tbluserBadge ub JOIN tblbadge b ON ub.badgeId = b.badgeId WHERE ub.userId = $1",
-      [userId]
-    );
+    const userId = req.query.userId;
 
-    if (result.rows.length === 0) {
-      res.status(404).send("No badges awarded to the user");
+    if (!userId) {
+      // If userId is not provided, retrieve all badges
+      const allBadgesResult = await connection.query(
+        "SELECT b.badgeId, b.image, b.badgeName, ub.createDt FROM tbluserBadge ub JOIN tblbadge b ON ub.badgeId = b.badgeId"
+      );
+
+      if (allBadgesResult.rows.length === 0) {
+        res.status(404).send("No badges found");
+      } else {
+        res.json(allBadgesResult.rows);
+      }
     } else {
-      res.json(result.rows);
+      // If userId is provided, retrieve badges for the specific user
+      const userBadgesResult = await connection.query(
+        "SELECT b.badgeId, b.image, b.badgeName, ub.createDt FROM tbluserBadge ub JOIN tblbadge b ON ub.badgeId = b.badgeId WHERE ub.userId = $1",
+        [userId]
+      );
+
+      if (userBadgesResult.rows.length === 0) {
+        res.status(404).send("No badges awarded to the user");
+      } else {
+        res.json(userBadgesResult.rows);
+      }
     }
   } catch (error) {
     console.error(error);
