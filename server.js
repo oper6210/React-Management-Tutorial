@@ -272,7 +272,7 @@ app.get("/badge", async (req, res) => {
       if (result.rows.length === 0) {
         res.status(404).send("Badge not found");
       } else {
-        res.json(result.rows);
+        res.json(result.rows[0]);
       }
     } else {
       // badgeId가 주어지지 않은 경우 전체 배지 목록 조회
@@ -354,7 +354,7 @@ app.get("/mybadge", async (req, res) => {
       if (userBadgesResult.rows.length === 0) {
         res.status(404).send("No badges awarded to the user");
       } else {
-        res.json(userBadgesResult.rows);
+        res.json(userBadgesResult.rows[0]);
       }
     }
   } catch (error) {
