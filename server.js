@@ -316,10 +316,25 @@ app.post("/mybadge", async (req, res) => {
     // 생성된 현재 시간을 원하는 형식으로 변환 (예: 'YYYY-MM-DD HH:mm:ss')
     const formattedDatetime = currentDatetime.toISOString().slice(0, 19).replace("T", " ");
 
-    await connection.query(
-      "INSERT INTO tbluserBadge (badgeId, userId, createDt) VALUES ($1, $2, $3)",
-      [badgeId, userId, formattedDatetime]
+    // 해당 badgeId와 userId의 조합이 이미 존재하는지 확인
+    const existingBadge = await connection.query(
+      "SELECT * FROM tbluserBadge WHERE badgeId = $1 AND userId = $2",
+      [badgeId, userId]
     );
+
+    if (existingBadge.rows.length > 0) {
+      // 이미 존재하는 경우 업데이트
+      await connection.query(
+        "UPDATE tbluserBadge SET createDt = $1 WHERE badgeId = $2 AND userId = $3",
+        [formattedDatetime, badgeId, userId]
+      );
+    } else {
+      // 존재하지 않는 경우 새로운 레코드 추가
+      await connection.query(
+        "INSERT INTO tbluserBadge (badgeId, userId, createDt) VALUES ($1, $2, $3)",
+        [badgeId, userId, formattedDatetime]
+      );
+    }
 
     res.status(201).send("Badge awarded successfully");
   } catch (error) {
