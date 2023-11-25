@@ -3,6 +3,7 @@ const fs = require("fs");
 const express = require("express");
 const session = require("express-session");
 const bodyParser = require("body-parser");
+const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 80;
 const FileStore = require("session-file-store")(session);
@@ -10,6 +11,9 @@ const FileStore = require("session-file-store")(session);
 // JSON 및 URL-encoded 데이터를 파싱하기 위한 미들웨어 설정
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cors({
+  origin : '*',
+}));
 
 // JSON 파일에서 데이터베이스 구성 정보 읽고 파싱하기
 const data = fs.readFileSync("./database.json");
