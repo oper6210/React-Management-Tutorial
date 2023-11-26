@@ -1,12 +1,12 @@
 // 필요한 모듈 가져오기
 const fs = require("fs");
 const express = require("express");
-const session = require("express-session");
+// const session = require("express-session");
 const bodyParser = require("body-parser");
 const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 8080;
-const FileStore = require("session-file-store")(session);
+// const FileStore = require("session-file-store")(session);
 app.set('trust proxy', true);
 
 // JSON 및 URL-encoded 데이터를 파싱하기 위한 미들웨어 설정
@@ -30,34 +30,34 @@ const connection = new Client({
   port: conf.port,
 });
 
-// 세션 관련 옵션 및 모듈 가져오기
-const sessionOption = require("./lib/sessionOption");
-const PgSession = require("connect-pg-simple")(session);
+// // 세션 관련 옵션 및 모듈 가져오기
+// const sessionOption = require("./lib/sessionOption");
+// const PgSession = require("connect-pg-simple")(session);
 
-// 세션 저장을 위한 PostgreSQL 클라이언트 생성
-const sessionPool = new Client({
-  connectionString: sessionOption.connectionString,
-});
+// // 세션 저장을 위한 PostgreSQL 클라이언트 생성
+// const sessionPool = new Client({
+//   connectionString: sessionOption.connectionString,
+// });
 
-// 세션 정보를 저장하기 위한 테이블 이름 설정
-const sessionStore = new PgSession({
-  pool: sessionPool,
-  tableName: "session",
-});
+// // 세션 정보를 저장하기 위한 테이블 이름 설정
+// const sessionStore = new PgSession({
+//   pool: sessionPool,
+//   tableName: "session",
+// });
 
 // 세션 설정 및 미들웨어 설정
-app.use(
-  session({
-    name: "session ID",
-    key: "session_cookie_name",
-    secret: sessionOption.password,
-    store: new FileStore(),
-    resave: false,
-    saveUninitialized: false,
-    cookie:
-      ((maxAge = 24 * 60 * 60 * 1000), (httpOnly = false), (secure = false)),
-  })
-);
+// app.use(
+//   session({
+//     name: "session ID",
+//     key: "session_cookie_name",
+//     secret: sessionOption.password,
+//     store: new FileStore(),
+//     resave: false,
+//     saveUninitialized: false,
+//     cookie:
+//       ((maxAge = 24 * 60 * 60 * 1000), (httpOnly = false), (secure = false)),
+//   })
+// );
 
 // 파일 업로드를 위한 Multer 모듈 설정
 const multer = require("multer");
