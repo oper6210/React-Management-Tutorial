@@ -7,6 +7,7 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 8080;
 const FileStore = require("session-file-store")(session);
+app.set('trust proxy', true);
 
 // JSON 및 URL-encoded 데이터를 파싱하기 위한 미들웨어 설정
 app.use(bodyParser.json());
